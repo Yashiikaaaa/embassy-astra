@@ -126,7 +126,7 @@ const ContactForm = ({ contactmodal, setContactModal, leadSource }) => {
       name: name.trim().toLowerCase(),
       phoneNumber: number.trim(),
       campaign: true,
-      projectId: "PL37",
+      projectId: "",
       projectName: "Embassy Astra",
       currentAgent: "srihitha",
       utmDetails: {
@@ -139,7 +139,7 @@ const ContactForm = ({ contactmodal, setContactModal, leadSource }) => {
 
     try {
       const response = await fetch(
-        "https://google-campaign-leads-service-dot-iqol-crm.appspot.com",
+        "https://google-campaign-leads-service-dot-iqol-crm.appspot.com/handleMultipleCampaignData",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -147,6 +147,8 @@ const ContactForm = ({ contactmodal, setContactModal, leadSource }) => {
         }
       );
 
+      const result1 = response;
+      console.log("Success:", result1);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
