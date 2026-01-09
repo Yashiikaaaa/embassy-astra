@@ -12,41 +12,46 @@ export const useLeadTracking = () => {
     if (typeof window === "undefined") return {};
     const params = new URLSearchParams(window.location.search);
     return {
-      utm_source: params.get("utm_source") || undefined,
-      utm_medium: params.get("utm_medium") || undefined,
-      utm_campaign: params.get("utm_campaign") || undefined,
-      utm_term: params.get("utm_term") || undefined,
-      utm_content: params.get("utm_content") || undefined,
+      utm_source: params.get("utmSource") || undefined,
+      utm_medium: params.get("utmMedium") || undefined,
+      utm_campaign: params.get("utmCampaign") || undefined,
+      utm_term: params.get("utmTerm") || undefined,
+      utm_content: params.get("utmContent") || undefined,
     };
   };
 
-  const trackButtonClick = useCallback((source, action, propertyType = null) => {
-    let eventAction = normalize(action);
-    let eventLabel = normalize(source);
+  const trackButtonClick = useCallback(
+    (source, action, propertyType = null) => {
+      let eventAction = normalize(action);
+      let eventLabel = normalize(source);
 
-    if (eventAction.includes("pricing") && propertyType) {
-      eventAction = `${eventAction}_${normalize(propertyType)}`;
-      if (!eventLabel.includes(normalize(propertyType))) {
-        eventLabel = `${eventLabel}_${normalize(propertyType)}`;
+      if (eventAction.includes("pricing") && propertyType) {
+        eventAction = `${eventAction}_${normalize(propertyType)}`;
+        if (!eventLabel.includes(normalize(propertyType))) {
+          eventLabel = `${eventLabel}_${normalize(propertyType)}`;
+        }
+      } else if (eventAction.includes("enquire_now") && source) {
+        eventAction = `${eventAction}_${normalize(source)}`;
       }
-    } else if (eventAction.includes("enquire_now") && source) {
-      eventAction = `${eventAction}_${normalize(source)}`;
-    }
 
-    eventAction = eventAction.replace(/(_pricing)+/g, "_pricing");
-    eventLabel = eventLabel.replace(/(_pricing)+/g, "_pricing");
+      eventAction = eventAction.replace(/(_pricing)+/g, "_pricing");
+      eventLabel = eventLabel.replace(/(_pricing)+/g, "_pricing");
 
-    ReactGA.event(eventAction, {
-      event_category: "Button Click",
-      event_label: eventLabel,
-      lead_source: source,
-      property_type: propertyType,
-      funnel_stage: "interest",
-      ...getUTMParams(), // ← add utm parameters
-    });
-  }, []);
+      ReactGA.event(eventAction, {
+        event_category: "Button Click",
+        event_label: eventLabel,
+        lead_source: source,
+        property_type: propertyType,
+        funnel_stage: "interest",
+        transport_type: "beacon",
+        ...getUTMParams(), // ← add utm parameters
+      });
+    },
+    []
+  );
 
-  const trackFormSubmission = useCallback((source, formType, propertyType = null) => {
+  const trackFormSubmission = useCallback(
+  (source, formType, propertyType = null) => {
     let eventAction;
 
     if (propertyType) {
@@ -57,6 +62,7 @@ export const useLeadTracking = () => {
       eventAction = `${normalize(formType)}_submit`;
     }
 
+    // 🔹 Dynamic / descriptive event
     ReactGA.event(eventAction, {
       event_category: "Form Submission",
       event_label: `${source}${propertyType ? ` - ${propertyType}` : ""}`,
@@ -64,9 +70,24 @@ export const useLeadTracking = () => {
       property_type: propertyType,
       funnel_stage:
         formType === "contact_form" ? "lead" : "site_visit_request",
-      ...getUTMParams(), // ← add utm parameters
+      transport_type: "beacon",
+      ...getUTMParams(),
     });
-  }, []);
+
+    // 🔹 Fixed conversion event (Capitalized as requested)
+    ReactGA.event("Contact_form_submit", {
+      event_category: "Form Submission",
+      event_label: `${source}${propertyType ? ` - ${propertyType}` : ""}`,
+      lead_source: source,
+      property_type: propertyType,
+      funnel_stage:
+        formType === "contact_form" ? "lead" : "site_visit_request",
+      transport_type: "beacon",
+      ...getUTMParams(),
+    });
+  },
+  []
+);
 
   const trackFormOpen = useCallback((source, formType, propertyType = null) => {
     let eventAction;
@@ -88,6 +109,7 @@ export const useLeadTracking = () => {
       lead_source: source,
       property_type: propertyType,
       funnel_stage: "consideration",
+      transport_type: "beacon",
       ...getUTMParams(), // ← add utm parameters
     });
   }, []);
@@ -116,5 +138,5 @@ export const LEAD_SOURCES = {
 export const PROPERTY_TYPES = {
   BHK2: "2BHK",
   BHK3: "3BHK",
-  BHK4: "4BHK"
+  BHK4: "4BHK",
 };
